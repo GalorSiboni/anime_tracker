@@ -1,11 +1,14 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api"; // Adjust to your backend URL
+const API_URL = "http://localhost:5003";
 
-// Get all anime shows
-export const getAnimeList = async () => {
+// Get all anime shows with pagination
+export const getAnimeList = async (page = 1, limit = 12) => {
 	try {
-		const response = await axios.get(`${API_URL}/anime`);
+		// Your API endpoint is "/" for anime list
+		const response = await axios.get(`${API_URL}/`, {
+			params: { page, limit },
+		});
 		return response.data;
 	} catch (error) {
 		console.error("Error fetching anime list:", error);
@@ -27,7 +30,8 @@ export const getAnimeById = async (id) => {
 // Get user favorites (requires auth)
 export const getFavorites = async (userId) => {
 	try {
-		const response = await axios.get(`${API_URL}/users/${userId}/favorites`);
+		// Adjust this endpoint to match your backend
+		const response = await axios.get(`${API_URL}/favorites/${userId}`);
 		return response.data;
 	} catch (error) {
 		console.error("Error fetching favorites:", error);
@@ -38,7 +42,9 @@ export const getFavorites = async (userId) => {
 // Add to favorites
 export const addToFavorites = async (userId, animeId) => {
 	try {
-		const response = await axios.post(`${API_URL}/users/${userId}/favorites`, {
+		// Adjust this endpoint to match your backend
+		const response = await axios.post(`${API_URL}/favorites`, {
+			userId,
 			animeId,
 		});
 		return response.data;
@@ -51,8 +57,9 @@ export const addToFavorites = async (userId, animeId) => {
 // Remove from favorites
 export const removeFromFavorites = async (userId, animeId) => {
 	try {
+		// Adjust this endpoint to match your backend
 		const response = await axios.delete(
-			`${API_URL}/users/${userId}/favorites/${animeId}`
+			`${API_URL}/favorites/${userId}/${animeId}`
 		);
 		return response.data;
 	} catch (error) {
@@ -64,7 +71,9 @@ export const removeFromFavorites = async (userId, animeId) => {
 // Update watched episodes
 export const updateWatchedEpisodes = async (userId, animeId, episodeIds) => {
 	try {
-		const response = await axios.post(`${API_URL}/users/${userId}/watched`, {
+		// Adjust this endpoint to match your backend
+		const response = await axios.post(`${API_URL}/watched`, {
+			userId,
 			animeId,
 			episodeIds,
 		});
@@ -78,12 +87,20 @@ export const updateWatchedEpisodes = async (userId, animeId, episodeIds) => {
 // Get watched episodes for a user and anime
 export const getWatchedEpisodes = async (userId, animeId) => {
 	try {
-		const response = await axios.get(
-			`${API_URL}/users/${userId}/watched/${animeId}`
-		);
+		// Adjust this endpoint to match your backend
+		const response = await axios.get(`${API_URL}/watched/${userId}/${animeId}`);
 		return response.data;
 	} catch (error) {
 		console.error("Error fetching watched episodes:", error);
 		throw error;
+	}
+};
+
+// Set auth token for API requests
+export const setAuthToken = (token) => {
+	if (token) {
+		axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+	} else {
+		delete axios.defaults.headers.common["Authorization"];
 	}
 };

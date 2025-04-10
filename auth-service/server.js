@@ -25,7 +25,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Routes
-app.use("/api/auth", authRoutes);
+app.use("/", authRoutes);
 
 // Health check endpoint
 app.get("/health", (req, res) => {

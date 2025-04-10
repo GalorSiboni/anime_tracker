@@ -5,7 +5,7 @@ import "./LoginForm.css";
 
 const LoginForm = () => {
 	const [isLogin, setIsLogin] = useState(true);
-	const [name, setName] = useState("");
+	const [username, setUsername] = useState(""); // Changed from name to username
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState("");
@@ -24,12 +24,17 @@ const LoginForm = () => {
 			if (isLogin) {
 				userData = await loginUser(email, password);
 			} else {
-				userData = await registerUser(name, email, password);
+				userData = await registerUser(username, email, password); // Changed from name to username
 			}
 
 			login(userData);
 		} catch (error) {
-			setError(error.response?.data?.message || "Something went wrong");
+			console.error("Auth error:", error);
+			setError(
+				error.response?.data?.message ||
+					error.response?.data?.error ||
+					"Something went wrong"
+			);
 		} finally {
 			setLoading(false);
 		}
@@ -49,12 +54,13 @@ const LoginForm = () => {
 			<form onSubmit={handleSubmit}>
 				{!isLogin && (
 					<div className="form-group">
-						<label htmlFor="name">Name</label>
+						<label htmlFor="username">Username</label>{" "}
+						{/* Changed from name to username */}
 						<input
 							type="text"
-							id="name"
-							value={name}
-							onChange={(e) => setName(e.target.value)}
+							id="username"
+							value={username}
+							onChange={(e) => setUsername(e.target.value)}
 							required={!isLogin}
 						/>
 					</div>

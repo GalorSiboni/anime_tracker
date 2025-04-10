@@ -16,7 +16,7 @@ app.use(
 
 // Proxy to auth service
 app.use(
-	"/api/auth",
+	"/auth",
 	createProxyMiddleware({
 		target: process.env.AUTH_SERVICE_URL || "http://localhost:5002",
 		changeOrigin: true,

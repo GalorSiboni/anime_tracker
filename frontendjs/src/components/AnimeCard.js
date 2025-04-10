@@ -8,6 +8,16 @@ const AnimeCard = ({ anime, isFavorite, onFavoriteChange }) => {
 	const { user } = useContext(AuthContext);
 	const [loading, setLoading] = useState(false);
 
+	// Extract the correct properties based on the API response structure
+	const animeId = anime.mal_id || anime._id;
+	const title = anime.title;
+	const description = anime.synopsis || anime.description || "";
+	const imageUrl =
+		anime.images?.jpg?.image_url ||
+		anime.images?.webp?.image_url ||
+		anime.image ||
+		"";
+
 	const handleFavoriteClick = async (e) => {
 		e.preventDefault(); // Prevent navigation to details page
 		if (!user) return;
@@ -15,11 +25,11 @@ const AnimeCard = ({ anime, isFavorite, onFavoriteChange }) => {
 		setLoading(true);
 		try {
 			if (isFavorite) {
-				await removeFromFavorites(user.id, anime._id);
+				await removeFromFavorites(user.id, animeId);
 			} else {
-				await addToFavorites(user.id, anime._id);
+				await addToFavorites(user.id, animeId);
 			}
-			onFavoriteChange(anime._id);
+			onFavoriteChange(animeId);
 		} catch (error) {
 			console.error("Error updating favorites:", error);
 		} finally {
@@ -29,16 +39,16 @@ const AnimeCard = ({ anime, isFavorite, onFavoriteChange }) => {
 
 	return (
 		<div className="anime-card">
-			<Link to={`/anime/${anime._id}`} className="card-link">
+			<Link to={`/anime/${animeId}`} className="card-link">
 				<div className="card-image">
-					<img src={anime.image} alt={anime.title} />
+					<img src={imageUrl} alt={title} />
 				</div>
 				<div className="card-content">
-					<h3 className="card-title">{anime.title}</h3>
+					<h3 className="card-title">{title}</h3>
 					<p className="card-description">
-						{anime.description.length > 100
-							? anime.description.substring(0, 100) + "..."
-							: anime.description}
+						{description.length > 100
+							? description.substring(0, 100) + "..."
+							: description}
 					</p>
 				</div>
 			</Link>
