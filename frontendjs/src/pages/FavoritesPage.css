@@ -1,0 +1,17 @@
+.favorites-page {
+  padding: 20px 0;
+}
+
+.favorites-page h1 {
+  margin-bottom: 30px;
+  color: #2c3e50;
+  text-align: center;
+}
+
+.no-favorites {
+  text-align: center;
+  padding: 40px 0;
+  color: #7f8c8d;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}

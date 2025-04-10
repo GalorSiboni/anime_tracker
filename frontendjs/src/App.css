@@ -1,0 +1,31 @@
+.App {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+
+.container {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 0 20px;
+	width: 100%;
+}
+
+main.container {
+	flex: 1;
+	padding-top: 20px;
+	padding-bottom: 40px;
+}
+
+.loading,
+.error {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 300px;
+	font-size: 18px;
+}
+
+.error {
+	color: #e53935;
+}

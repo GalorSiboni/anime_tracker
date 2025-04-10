@@ -1,0 +1,113 @@
+.anime-details {
+  padding: 20px 0;
+}
+
+.anime-header {
+  display: flex;
+  margin-bottom: 30px;
+}
+
+.anime-image {
+  width: 300px;
+  flex-shrink: 0;
+  margin-right: 30px;
+}
+
+.anime-image img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.anime-info {
+  flex: 1;
+}
+
+.anime-info h1 {
+  margin-bottom: 15px;
+  color: #2c3e50;
+}
+
+.anime-description {
+  color: #7f8c8d;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.favorite-btn {
+  padding: 10px 20px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+  font-weight: bold;
+  margin-top: 15px;
+}
+
+.favorite-btn:hover {
+  background: #2980b9;
+}
+
+.favorite-btn.favorited {
+  background: #e74c3c;
+}
+
+.favorite-btn.favorited:hover {
+  background: #c0392b;
+}
+
+.favorite-btn:disabled {
+  background: #95a5a6;
+  cursor: not-allowed;
+}
+
+.anime-trailer {
+  margin: 30px 0;
+}
+
+.anime-trailer h2 {
+  margin-bottom: 15px;
+  color: #2c3e50;
+}
+
+.trailer-container {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  height: 0;
+  overflow: hidden;
+  max-width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.trailer-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.login-prompt {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  margin-top: 30px;
+  color: #7f8c8d;
+}
+
+@media (max-width: 768px) {
+  .anime-header {
+    flex-direction: column;
+  }
+
+  .anime-image {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 20px;
+  }
+}
