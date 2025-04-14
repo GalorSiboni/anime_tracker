@@ -13,6 +13,7 @@ const memoryCache = new Map();
 // In a production environment, this would be in a database
 const userFavorites = {}; // userId -> array of anime ids
 const userWatched = {}; // userId -> { animeId -> array of episode ids }
+const animeStatuses = {}; // userId -> { animeId -> status }
 
 // Redis client status
 let redisAvailable = false;
@@ -395,6 +396,32 @@ router.post("/watched", express.json(), (req, res) => {
 	} catch (error) {
 		console.error("Error updating watched episodes:", error.message);
 		res.status(500).json({ error: "Error updating watched episodes" });
+	}
+});
+
+router.put("/anime-status", express.json(), (req, res) => {
+	const { userId, animeId, status } = req.body;
+
+	if (!userId || !animeId || !status) {
+		return res.status(400).json({ error: "Missing required fields" });
+	}
+
+	try {
+		// Initialize data structure if needed
+		if (!animeStatuses) {
+			animeStatuses = {};
+		}
+		if (!animeStatuses[userId]) {
+			animeStatuses[userId] = {};
+		}
+
+		// Update the status
+		animeStatuses[userId][animeId] = status;
+
+		res.json({ success: true, message: "Anime status updated" });
+	} catch (error) {
+		console.error("Error updating anime status:", error);
+		res.status(500).json({ error: "Failed to update anime status" });
 	}
 });
 

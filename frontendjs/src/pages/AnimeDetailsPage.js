@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import {
 	getAnimeById,
@@ -7,6 +7,7 @@ import {
 	addToFavorites,
 	removeFromFavorites,
 	getFavorites,
+	updateAnimeStatus,
 } from "../services/api";
 import { AuthContext } from "../context/AuthContext";
 import ProgressBar from "../components/ProgressBar";
@@ -22,8 +23,6 @@ const AnimeDetailsPage = () => {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
 	const [favoriteLoading, setFavoriteLoading] = useState(false);
-	const [seasons, setSeasons] = useState([]);
-	const [seasonWatchStatus, setSeasonWatchStatus] = useState({});
 
 	useEffect(() => {
 		const fetchAnimeDetails = async () => {
@@ -38,23 +37,6 @@ const AnimeDetailsPage = () => {
 					processedAnime = response.data;
 				}
 
-				// Process episodes if they exist in a different format
-				if (
-					processedAnime &&
-					!processedAnime.episodes &&
-					processedAnime.data &&
-					Array.isArray(processedAnime.data)
-				) {
-					// This handles the case where episodes are returned separately
-					const episodes = processedAnime.data.map((ep, index) => ({
-						_id: ep.mal_id || `${id}-${index + 1}`,
-						number: ep.mal_id || index + 1,
-						title: ep.title || `Episode ${index + 1}`,
-						season: 1,
-					}));
-					processedAnime.episodes = episodes;
-				}
-
 				setAnime(processedAnime);
 				setLoading(false);
 			} catch (err) {
@@ -67,69 +49,37 @@ const AnimeDetailsPage = () => {
 		fetchAnimeDetails();
 	}, [id]);
 
-	useEffect(() => {
-		// Generate seasons data once anime is loaded
-		if (anime && anime.episodes) {
-			// Make sure episodes is an array before using reduce
-			const episodesArray = Array.isArray(anime.episodes) ? anime.episodes : [];
+	// Memoize the getEpisodes function
+	const getEpisodes = useCallback(() => {
+		if (!anime) return [];
 
-			// Group episodes by season
-			const seasonGroups = episodesArray.reduce((acc, episode) => {
-				const season = episode.season || 1;
-				if (!acc[season]) {
-					acc[season] = [];
-				}
-				acc[season].push(episode);
-				return acc;
-			}, {});
-
-			// Convert to array format
-			const seasonsList = Object.keys(seasonGroups).map((season) => ({
-				number: parseInt(season),
-				episodes: seasonGroups[season],
-			}));
-
-			setSeasons(seasonsList);
+		// If anime has episodes property and it's an array, use it
+		if (anime.episodes && Array.isArray(anime.episodes)) {
+			return anime.episodes;
 		}
-	}, [anime]);
 
-	useEffect(() => {
-		// Calculate season watch status based on watched episodes
-		if (seasons.length > 0 && watchedEpisodes.length > 0) {
-			const status = {};
+		// If anime has episodes_count or episodes as a number, generate episode objects
+		const episodeCount =
+			anime.episodes_count ||
+			(typeof anime.episodes === "number" ? anime.episodes : 0);
 
-			seasons.forEach((season) => {
-				const totalEpisodes = season.episodes.length;
-				const watchedCount = season.episodes.filter((ep) =>
-					watchedEpisodes.includes(ep._id)
-				).length;
-
-				status[season.number] = {
-					total: totalEpisodes,
-					watched: watchedCount,
-					complete: watchedCount === totalEpisodes && totalEpisodes > 0,
-				};
-			});
-
-			setSeasonWatchStatus(status);
-		} else if (seasons.length > 0) {
-			// Initialize with zeroes if no episodes watched
-			const status = {};
-			seasons.forEach((season) => {
-				status[season.number] = {
-					total: season.episodes.length,
-					watched: 0,
-					complete: false,
-				};
-			});
-			setSeasonWatchStatus(status);
+		if (episodeCount > 0) {
+			const episodeArray = [];
+			for (let i = 1; i <= episodeCount; i++) {
+				episodeArray.push({
+					_id: `${id}-${i}`,
+					number: i,
+					title: `Episode ${i}`,
+					season: 1,
+				});
+			}
+			return episodeArray;
 		}
-	}, [seasons, watchedEpisodes]);
+
+		return [];
+	}, [anime, id]);
 
 	useEffect(() => {
-		// Debug log to see the user object structure
-		console.log("Current user object:", user);
-
 		// If not logged in, don't try to fetch user-specific data
 		if (!user) {
 			setWatchedEpisodes([]);
@@ -137,14 +87,9 @@ const AnimeDetailsPage = () => {
 			return;
 		}
 
-		// Get user ID using the utility function
+		// Get user ID
 		const userId = getUserId();
-		console.log("Using userId:", userId);
-
-		if (!userId) {
-			console.error("User is logged in but no ID found in user object:", user);
-			return;
-		}
+		if (!userId) return;
 
 		const fetchUserData = async () => {
 			try {
@@ -173,10 +118,33 @@ const AnimeDetailsPage = () => {
 		fetchUserData();
 	}, [id, user, getUserId]);
 
+	// Add a new useEffect to monitor watched episodes and update status automatically
+	useEffect(() => {
+		if (!user || !anime) return;
+
+		const userId = getUserId();
+		if (!userId) return;
+
+		const episodes = getEpisodes();
+
+		// If all episodes are watched and there's at least one episode
+		if (episodes.length > 0 && watchedEpisodes.length === episodes.length) {
+			// Check if status is not already "completed"
+			if (anime.status !== "completed") {
+				// Update anime status to "completed"
+				updateAnimeStatus(userId, id, "completed")
+					.then(() => {
+						// You may want to update local state if needed
+						setAnime((prev) => ({ ...prev, status: "completed" }));
+					})
+					.catch((err) => console.error("Error updating anime status:", err));
+			}
+		}
+	}, [watchedEpisodes, anime, user, getUserId, id, getEpisodes]);
+
 	const handleEpisodeToggle = async (episodeId) => {
 		if (!user) return;
 
-		// Get userId using the getUserId utility function
 		const userId = getUserId();
 		if (!userId) return;
 
@@ -195,43 +163,9 @@ const AnimeDetailsPage = () => {
 		}
 	};
 
-	const handleSeasonToggle = async (seasonNumber, isChecked) => {
-		if (!user || !anime) return;
-
-		const userId = getUserId();
-		if (!userId) return;
-
-		const seasonEpisodes =
-			seasons.find((s) => s.number === seasonNumber)?.episodes || [];
-		const episodeIds = seasonEpisodes.map((episode) => episode._id);
-
-		let newWatchedEpisodes;
-
-		if (isChecked) {
-			// Add all season episodes to watched list
-			newWatchedEpisodes = [...new Set([...watchedEpisodes, ...episodeIds])];
-		} else {
-			// Remove all season episodes from watched list
-			newWatchedEpisodes = watchedEpisodes.filter(
-				(id) => !episodeIds.includes(id)
-			);
-		}
-
-		setWatchedEpisodes(newWatchedEpisodes);
-
-		try {
-			await updateWatchedEpisodes(userId, id, newWatchedEpisodes);
-		} catch (err) {
-			console.error("Error updating watched episodes:", err);
-			// Revert changes if update fails
-			setWatchedEpisodes(watchedEpisodes);
-		}
-	};
-
 	const handleFavoriteToggle = async () => {
 		if (!user) return;
 
-		// Get userId using the getUserId utility function
 		const userId = getUserId();
 		if (!userId) return;
 
@@ -288,34 +222,45 @@ const AnimeDetailsPage = () => {
 		return anime.synopsis || anime.description || "";
 	};
 
-	// Helper function to get episodes
-	const getEpisodes = () => {
-		if (!anime) return [];
+	// In AnimeDetailsPage.js, add this new function:
+	const handleSeasonToggle = async (seasonNumber, isChecked) => {
+		if (!user) return;
 
-		// If anime has episodes property and it's an array, use it
-		if (anime.episodes && Array.isArray(anime.episodes)) {
-			return anime.episodes;
+		const userId = getUserId();
+		if (!userId) return;
+
+		// Get all episodes for this season
+		const seasonEpisodes = episodes.filter(
+			(ep) => (ep.season || 1) === seasonNumber
+		);
+		const seasonEpisodeIds = seasonEpisodes.map((ep) => ep._id);
+
+		// Create a new list of watched episodes
+		let newWatchedEpisodes;
+
+		if (isChecked) {
+			// Add all season episodes to watched list
+			newWatchedEpisodes = [
+				...new Set([...watchedEpisodes, ...seasonEpisodeIds]),
+			];
+		} else {
+			// Remove all season episodes from watched list
+			newWatchedEpisodes = watchedEpisodes.filter(
+				(id) => !seasonEpisodeIds.includes(id)
+			);
 		}
 
-		// If anime has episodes_count or episodes as a number, generate episode objects
-		const episodeCount =
-			anime.episodes_count ||
-			(typeof anime.episodes === "number" ? anime.episodes : 0);
+		// Update state
+		setWatchedEpisodes(newWatchedEpisodes);
 
-		if (episodeCount > 0) {
-			const episodeArray = [];
-			for (let i = 1; i <= episodeCount; i++) {
-				episodeArray.push({
-					_id: `${id}-${i}`,
-					number: i,
-					title: `Episode ${i}`,
-					season: 1,
-				});
-			}
-			return episodeArray;
+		// Update backend
+		try {
+			await updateWatchedEpisodes(userId, id, newWatchedEpisodes);
+		} catch (err) {
+			console.error("Error updating watched episodes:", err);
+			// Revert changes if update fails
+			setWatchedEpisodes(watchedEpisodes);
 		}
-
-		return [];
 	};
 
 	if (loading) return <div className="loading">Loading...</div>;
@@ -378,36 +323,11 @@ const AnimeDetailsPage = () => {
 			{user ? (
 				<div className="episodes-section">
 					<h2>Episodes</h2>
-
-					{seasons.length > 0 && (
-						<div className="season-toggles">
-							{seasons.map((season) => (
-								<div key={season.number} className="season-toggle">
-									<label className="season-checkbox-label">
-										<input
-											type="checkbox"
-											checked={
-												seasonWatchStatus[season.number]?.complete || false
-											}
-											onChange={(e) =>
-												handleSeasonToggle(season.number, e.target.checked)
-											}
-										/>
-										<span>
-											Mark Season {season.number} as watched (
-											{seasonWatchStatus[season.number]?.watched || 0}/
-											{seasonWatchStatus[season.number]?.total || 0})
-										</span>
-									</label>
-								</div>
-							))}
-						</div>
-					)}
-
 					<EpisodeList
 						episodes={episodes}
 						watchedEpisodes={watchedEpisodes}
 						onEpisodeToggle={handleEpisodeToggle}
+						onSeasonToggle={handleSeasonToggle}
 					/>
 				</div>
 			) : (

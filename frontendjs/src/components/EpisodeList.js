@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 import "./EpisodeList.css";
 
-const EpisodeList = ({ episodes, watchedEpisodes, onEpisodeToggle }) => {
+const EpisodeList = ({
+	episodes,
+	watchedEpisodes,
+	onEpisodeToggle,
+	onSeasonToggle,
+}) => {
 	const [expandedSeason, setExpandedSeason] = useState(1);
 
 	// Group episodes by season
@@ -30,31 +35,54 @@ const EpisodeList = ({ episodes, watchedEpisodes, onEpisodeToggle }) => {
 		acc[season] = {
 			total: totalEpisodes,
 			watched: watchedCount,
-			complete: watchedCount === totalEpisodes,
+			complete: watchedCount === totalEpisodes && totalEpisodes > 0,
 		};
 
 		return acc;
 	}, {});
 
+	const handleSeasonCheckboxClick = (e, season) => {
+		e.stopPropagation();
+
+		// Call the parent's season toggle function directly
+		const isChecking = !seasonStatus[season].complete;
+		onSeasonToggle(Number(season), isChecking);
+	};
+
 	return (
 		<div className="episode-list">
 			{Object.keys(seasons).map((season) => (
 				<div key={season} className="season-container">
-					<h4
+					<div
 						className={`season-title ${
 							seasonStatus[season].complete ? "season-complete" : ""
 						}`}
-						onClick={() => toggleSeason(Number(season))}
 					>
-						Season {season}
-						<span className="season-progress">
-							{seasonStatus[season].watched} / {seasonStatus[season].total}{" "}
-							episodes watched
-						</span>
-						<span className="toggle-icon">
-							{expandedSeason === Number(season) ? "▼" : "►"}
-						</span>
-					</h4>
+						<div
+							className="season-checkbox"
+							onClick={(e) => handleSeasonCheckboxClick(e, season)}
+						>
+							<input
+								type="checkbox"
+								checked={seasonStatus[season].complete}
+								readOnly // Using readOnly since we handle the change manually
+							/>
+						</div>
+
+						<div
+							className="season-title-text"
+							onClick={() => toggleSeason(Number(season))}
+						>
+							Season {season}
+							<span className="season-progress">
+								{seasonStatus[season].watched} / {seasonStatus[season].total}{" "}
+								episodes watched
+							</span>
+							<span className="toggle-icon">
+								{expandedSeason === Number(season) ? "▼" : "►"}
+							</span>
+						</div>
+					</div>
 
 					{expandedSeason === Number(season) && (
 						<div className="episodes-container">

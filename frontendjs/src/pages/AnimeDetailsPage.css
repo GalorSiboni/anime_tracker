@@ -100,6 +100,7 @@
 	color: #7f8c8d;
 }
 
+/* Episode section with season checkboxes */
 .episodes-section {
 	margin-top: 30px;
 }
@@ -120,7 +121,8 @@
 }
 
 .season-toggle {
-	margin-right: 15px;
+	flex: 1;
+	min-width: 200px;
 }
 
 .season-checkbox-label {
@@ -157,6 +159,5 @@
 
 	.season-toggles {
 		flex-direction: column;
-		gap: 10px;
 	}
 }
