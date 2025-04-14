@@ -5,29 +5,52 @@ const EpisodeList = ({ episodes, watchedEpisodes, onEpisodeToggle }) => {
 	const [expandedSeason, setExpandedSeason] = useState(1);
 
 	// Group episodes by season
-	const seasons = episodes.reduce((acc, episode) => {
-		const season = episode.season || 1;
-		if (!acc[season]) {
-			acc[season] = [];
-		}
-		acc[season].push(episode);
-		return acc;
-	}, {});
+	const seasons = Array.isArray(episodes)
+		? episodes.reduce((acc, episode) => {
+				const season = episode.season || 1;
+				if (!acc[season]) {
+					acc[season] = [];
+				}
+				acc[season].push(episode);
+				return acc;
+		  }, {})
+		: {};
 
 	const toggleSeason = (season) => {
 		setExpandedSeason(expandedSeason === season ? null : season);
 	};
 
+	// Calculate watched status for each season
+	const seasonStatus = Object.keys(seasons).reduce((acc, season) => {
+		const totalEpisodes = seasons[season].length;
+		const watchedCount = seasons[season].filter((ep) =>
+			watchedEpisodes.includes(ep._id)
+		).length;
+
+		acc[season] = {
+			total: totalEpisodes,
+			watched: watchedCount,
+			complete: watchedCount === totalEpisodes,
+		};
+
+		return acc;
+	}, {});
+
 	return (
 		<div className="episode-list">
-			<h3>Episodes</h3>
 			{Object.keys(seasons).map((season) => (
 				<div key={season} className="season-container">
 					<h4
-						className="season-title"
+						className={`season-title ${
+							seasonStatus[season].complete ? "season-complete" : ""
+						}`}
 						onClick={() => toggleSeason(Number(season))}
 					>
 						Season {season}
+						<span className="season-progress">
+							{seasonStatus[season].watched} / {seasonStatus[season].total}{" "}
+							episodes watched
+						</span>
 						<span className="toggle-icon">
 							{expandedSeason === Number(season) ? "▼" : "►"}
 						</span>

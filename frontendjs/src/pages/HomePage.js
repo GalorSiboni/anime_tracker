@@ -21,7 +21,6 @@ const HomePage = () => {
 			setLoading(true);
 			try {
 				const response = await getAnimeList(currentPage, itemsPerPage);
-				console.log("API Response:", response); // Debug log to see the structure
 
 				// Handle the specific structure from your animeApi.js
 				if (response && response.data && Array.isArray(response.data)) {

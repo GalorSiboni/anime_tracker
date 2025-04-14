@@ -5,7 +5,7 @@ import { addToFavorites, removeFromFavorites } from "../services/api";
 import "./AnimeCard.css";
 
 const AnimeCard = ({ anime, isFavorite, onFavoriteChange }) => {
-	const { user } = useContext(AuthContext);
+	const { user, getUserId } = useContext(AuthContext);
 	const [loading, setLoading] = useState(false);
 
 	// Extract the correct properties based on the API response structure
@@ -17,17 +17,21 @@ const AnimeCard = ({ anime, isFavorite, onFavoriteChange }) => {
 		anime.images?.webp?.image_url ||
 		anime.image ||
 		"";
+	const status = anime.status || "in-progress";
 
 	const handleFavoriteClick = async (e) => {
 		e.preventDefault(); // Prevent navigation to details page
 		if (!user) return;
 
+		const userId = getUserId();
+		if (!userId) return;
+
 		setLoading(true);
 		try {
 			if (isFavorite) {
-				await removeFromFavorites(user.id, animeId);
+				await removeFromFavorites(userId, animeId);
 			} else {
-				await addToFavorites(user.id, animeId);
+				await addToFavorites(userId, animeId);
 			}
 			onFavoriteChange(animeId);
 		} catch (error) {
@@ -37,8 +41,31 @@ const AnimeCard = ({ anime, isFavorite, onFavoriteChange }) => {
 		}
 	};
 
+	// Helper function to get appropriate status class
+	const getStatusClass = () => {
+		switch (status) {
+			case "completed":
+				return "status-completed";
+			case "waiting":
+				return "status-waiting";
+			case "in-progress":
+			default:
+				return "status-in-progress";
+		}
+	};
+
 	return (
 		<div className="anime-card">
+			{status && (
+				<div className={`anime-status ${getStatusClass()}`}>
+					{status === "waiting"
+						? "Waiting"
+						: status === "completed"
+						? "Completed"
+						: "In Progress"}
+				</div>
+			)}
+
 			<Link to={`/anime/${animeId}`} className="card-link">
 				<div className="card-image">
 					<img src={imageUrl} alt={title} />
@@ -52,6 +79,7 @@ const AnimeCard = ({ anime, isFavorite, onFavoriteChange }) => {
 					</p>
 				</div>
 			</Link>
+
 			{user && (
 				<button
 					className={`favorite-btn ${isFavorite ? "favorited" : ""}`}

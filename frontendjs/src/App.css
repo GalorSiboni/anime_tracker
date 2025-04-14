@@ -1,3 +1,26 @@
+:root {
+	--primary-color: #6200ee;
+	--primary-dark: #3700b3;
+	--primary-light: #bb86fc;
+	--secondary-color: #03dac6;
+	--secondary-dark: #018786;
+	--error-color: #cf6679;
+	--background: #121212;
+	--surface: #1e1e1e;
+	--text-primary: rgba(255, 255, 255, 0.87);
+	--text-secondary: rgba(255, 255, 255, 0.6);
+	--border-radius: 16px;
+	--card-radius: 12px;
+	--button-radius: 24px;
+}
+
+body {
+	background-color: var(--background);
+	color: var(--text-primary);
+	font-family: "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell",
+		"Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+}
+
 .App {
 	min-height: 100vh;
 	display: flex;
@@ -27,5 +50,55 @@ main.container {
 }
 
 .error {
-	color: #e53935;
+	color: var(--error-color);
+}
+
+button {
+	border-radius: var(--button-radius);
+	padding: 10px 20px;
+	font-weight: 600;
+	border: none;
+	cursor: pointer;
+	transition: all 0.3s ease;
+}
+
+.primary-btn {
+	background-color: var(--primary-color);
+	color: white;
+}
+
+.primary-btn:hover {
+	background-color: var(--primary-dark);
+	transform: translateY(-2px);
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.secondary-btn {
+	background-color: var(--secondary-color);
+	color: black;
+}
+
+.secondary-btn:hover {
+	background-color: var(--secondary-dark);
+	transform: translateY(-2px);
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+input,
+select,
+textarea {
+	background-color: var(--surface);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	padding: 12px 16px;
+	color: var(--text-primary);
+	border-radius: var(--border-radius);
+}
+
+a {
+	color: var(--primary-light);
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
 }
